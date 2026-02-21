@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Student Portal</h2>
+</div>
+
+<div class="row">
+    <div class="col-md-7">
+        <h4>Open Sessions</h4>
+        {% for session in available_sessions %}
+        <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+                <h5>{{ session.title }} <small class="text-muted">by {{ session.mentor.username }}</small></h5>
+                <p>{{ session.description }}</p>
+                <form method="POST" action="{{ url_for('views.apply_session', session_id=session.id) }}">
+                    <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="col-md-5">
+        <h4>My Applications</h4>
+        <ul class="list-group">
+            {% for app in my_applications %}
+            <li class="list-group-item d-flex justify-content-between">
+                {{ app.session.title }} <span class="badge bg-secondary">{{ app.status }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

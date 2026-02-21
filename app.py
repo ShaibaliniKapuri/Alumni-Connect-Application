@@ -1,11 +1,27 @@
-from flask import Flask, render_template, request,flash,redirect, session
+from flask import Flask, render_template, request,flash,redirect, session, url_for
+from config import Config
 from models import db, User, Session, Application
+from flask_login import LoginManager
+
+from auth import auth_bp
+from views import views_bp
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///alumni.db'
-app.config['SECRET_KEY'] = 'bootcamp_secret_key'
+app.config.from_object(Config)
 
 db.init_app(app)
+
+login_manager = LoginManager()
+login_manager.login_view = 'auth.login'
+login_manager.login_message_category ='warning'
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+app.register_blueprint(auth_bp)
+app.register_blueprint(views_bp)
 
 #creating admin
 with app.app_context():
@@ -17,49 +33,7 @@ with app.app_context():
 
 
 
-#Define Routes
 
-@app.route('/')
-def home():
-    return render_template('home.html')
-
-@app.route('/register', methods = ['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        role = request.form.get('role')
-
-        new_user = User(username = username, email = email, password = password, role = role)
-        if role == 'student' : new_user.is_approved = True #student do not need admin approval
-
-        db.session.add(new_user)
-        db.session.commit()
-        flash('Registration Successful')
-        return redirect('/')
-    return render_template('register.html')
-
-@app.route('/login', methods = ['GET', 'POST'])
-def login():
-    if request.method == "POST":
-        email = request.form.get('email')
-        password = request.form.get('password')
-        user = User.query.filter_by(email=email).first()
-
-        if user and user.password == password:
-            if user.role == 'alumni' and not user.is_approved:
-                flash("Account needs to be approved")
-                return redirect('/')
-            session['user_id'] = user.id
-            session['role'] = user.role
-
-            if user.role == 'admin' : return render_template("admin.html") #redirect('/admin')
-            if user.role == 'alumni' : return render_template("alumni.html") #redirect('/alumni')
-            if user.role == 'student' : return render_template("student.html") #redirect('/student')
-
-        flash("Invalid Credentials")
-    return render_template("login.html")
 
 
 if __name__ == '__main__':

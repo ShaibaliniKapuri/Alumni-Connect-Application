@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Admin Dashboard</h2>
+
+<form method="GET" action="{{ url_for('views.admin_dash') }}" class="d-flex w-50 mb-4">
+    <input class="form-control me-2" type="search" name="q" placeholder="Search users..." value="{{ search_query }}">
+    <button class="btn btn-primary" type="submit">Search</button>
+    {% if search_query %}<a href="{{ url_for('views.admin_dash') }}" class="btn btn-secondary ms-2">Clear</a>{% endif %}
+</form>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card"><div class="card-body"><canvas id="userChart"></canvas></div></div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card border-warning">
+            <div class="card-header bg-warning">Pending Mentor Approvals</div>
+            <ul class="list-group list-group-flush">
+                {% for p in pending_alumni %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        {{ p.username }} <a href="{{ url_for('views.approve_alumni', id=p.id) }}" class="btn btn-sm btn-success">Approve</a>
+                    </li>
+                {% else %}<li class="list-group-item">No pending approvals.</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

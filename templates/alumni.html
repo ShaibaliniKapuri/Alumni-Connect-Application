@@ -1,1 +1,49 @@
-<h2>Welcome Alumni</h2>
+{% extends "base.html" %}
+{% block content %}
+<h2>Mentor Dashboard</h2>
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">Create Session</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('views.alumni_dash') }}">
+                    <input type="text" name="title" class="form-control mb-2" placeholder="Title" required>
+                    <textarea name="description" class="form-control mb-2" placeholder="Description" required></textarea>
+                    <button type="submit" class="btn btn-primary w-100">Post</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        {% for session in my_sessions %}
+        <div class="card mb-3">
+            <div class="card-header bg-dark text-white">{{ session.title }}</div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead><tr><th>Applicant</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for app in session.applications %}
+                        <tr>
+                            <td>
+                                {{ app.student.username }}
+                                {% if app.student.resume_file %}
+                                 <a href="{{ url_for('static', filename='uploads/' + app.student.resume_file) }}" target="_blank" class="badge bg-info text-decoration-none">Resume</a>
+                                {% endif %}
+                            </td>
+                            <td>{{ app.status }}</td>
+                            <td>
+                                {% if app.status == 'Pending' %}
+                                <a href="{{ url_for('views.update_app', app_id=app.id, action='accept') }}" class="btn btn-sm btn-success">Accept</a>
+                                <a href="{{ url_for('views.update_app', app_id=app.id, action='reject') }}" class="btn btn-sm btn-danger">Reject</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
