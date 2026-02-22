@@ -1,5 +1,7 @@
+import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app,jsonify
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 from models import db, User, Session, Application
 from sqlalchemy import or_
 
@@ -51,6 +53,46 @@ def approve_alumni(id):
     flash('Approved!', 'success')
     return redirect(url_for('views.admin_dash'))
 
+#Alumni
+
+@views_bp.route('/alumni', methods = ['GET', 'POST'])
+@login_required
+def alumni_dash():
+    if current_user.role != 'alumni':
+        return redirect(url_for('views.dashboard'))
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        mentor_id = current_user.id 
+        new_session = Session(title = title, description = description, mentor_id = mentor_id)
+        new_session.is_approved = True #by default sessions will be approved
+
+        db.session.add(new_session)
+        db.session.commit()
+        flash("Session created successfully", 'success')
+        return redirect(url_for('views.alumni_dash'))
+    
+    my_sessions = Session.query.filter_by(mentor_id = current_user.id).all()
+    return render_template('alumni_dash.html', my_sessions = my_sessions)
+
+@views_bp.route('/update_app/<int:app_id>/<string:action>')
+@login_required
+def update_app(app_id, action):
+    if current_user.role != 'alumni':
+        return redirect(url_for('views.dashboard'))
+    
+    application = Application.query.get_or_404(app_id)
+    if application.session.mentor_id == current_user.id:
+        if action == 'accept':
+            application.status = 'Accepted'
+        else:
+            application.status = 'Rejected'
+        db.session.commit()
+    return redirect(url_for('views.alumni_dash'))    
+
+
+   
 
 
 #Student
@@ -75,3 +117,22 @@ def apply_session(session_id):
         db.session.commit()
         flash("Applied Successfully" , 'success')
     return redirect(url_for('views.student_dash'))
+
+
+
+@views_bp.route('/profile', methods = ['GET', 'POST'])
+@login_required
+def profile():
+    if current_user.role != 'student':
+        return redirect(url_for('views.dashboard'))
+
+    if request.method == 'POST':
+        file = request.files.get('resume')
+        if file and file.filename.endswith(('.pdf','.docx')):
+            filename = secure_filename(f"user_{current_user.id}")
+            file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+
+            current_user.resume_file = filename
+            db.session.commit()
+            flash('Resume uploaded', 'succcess')
+    return render_template('profile.html')    

@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request,flash,redirect, session, url_for
 from config import Config
 from models import db, User, Session, Application
@@ -8,6 +9,8 @@ from views import views_bp
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok = True)
 
 db.init_app(app)
 
