@@ -2,33 +2,64 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Student Portal</h2>
-    <a href="{{ url_for('views.profile') }}" class = "btn btn-outline-primary">Manage Resume</a>
+    <a href="{{ url_for('views.profile') }}" class="btn btn-outline-primary">Update Resume</a>
 </div>
 
 <div class="row">
-    <div class="col-md-7">
-        <h4>Open Sessions</h4>
+    <div class="col-md-7 mb-4">
+        <h4 class="mb-3">Open Mentorship Sessions</h4>
         {% for session in available_sessions %}
-        <div class="card mb-3 shadow-sm">
+        <div class="card mb-3 shadow-sm border-0 bg-white">
             <div class="card-body">
-                <h5>{{ session.title }} <small class="text-muted">by {{ session.mentor.username }}</small></h5>
+                <h5 class="text-primary">{{ session.title }}</h5>
+                <h6 class="text-muted small mb-3"><i class="bi bi-person"></i> Mentor: {{ session.mentor.username }}</h6>
                 <p>{{ session.description }}</p>
                 <form method="POST" action="{{ url_for('views.apply_session', session_id=session.id) }}">
-                    <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-4">Apply for Session</button>
                 </form>
             </div>
         </div>
+        {% else %}
+            <div class="alert alert-info shadow-sm">No active sessions are available at the moment. Please check back later!</div>
         {% endfor %}
     </div>
-    <div class="col-md-5">
-        <h4>My Applications</h4>
-        <ul class="list-group">
-            {% for app in my_applications %}
-            <li class="list-group-item d-flex justify-content-between">
-                {{ app.session.title }} <span class="badge bg-secondary">{{ app.status }}</span>
-            </li>
-            {% endfor %}
-        </ul>
+    
+    <div class="col-md-5 mb-4">
+        <h4 class="mb-3">My Application History</h4>
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Session Title</th>
+                            <th>Mentor</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in my_applications %}
+                        <tr>
+                            <td><strong>{{ app.session.title }}</strong></td>
+                            <td>{{ app.session.mentor.username }}</td>
+                            <td>
+                                {% if app.status == 'Accepted' %}
+                                    <span class="badge bg-success w-100">Accepted</span>
+                                {% elif app.status == 'Rejected' %}
+                                    <span class="badge bg-danger w-100">Rejected</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark w-100">Pending Review</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">You have not applied to any sessions yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

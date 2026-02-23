@@ -1,11 +1,23 @@
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app,jsonify
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from werkzeug.utils import secure_filename
 from models import db, User, Session, Application
 from sqlalchemy import or_
 
 views_bp = Blueprint('views', __name__)
+
+
+#Middleware
+#If a user gets blacklisted then he will be removed immediately
+
+@views_bp.before_request
+def check_blacklist():
+    if current_user.is_authenticated and current_user.is_blacklisted:
+        logout_user()
+        flash("Your account has been suspended by the admin", 'danger')
+        return redirect(url_for('auth.login'))
+
 
 #Dashboard
 
@@ -38,8 +50,15 @@ def admin_dash():
     alumni = [u for u in users if u.role == 'alumni']
     pending_alumni = [u for u in users if not u.is_approved]
 
-    sessions = Session.query.all()
-    return render_template('admin_dash.html',search_query = search_query, student_users = students, alumni_users = alumni, pending_alumni = pending_alumni, sessions = sessions)
+    #sessions = Session.query.all()
+    pending_sessions = Session.query.filter_by(is_approved = False).all()
+
+    return render_template('admin_dash.html', 
+                           students=students, 
+                           alumni=alumni, 
+                           pending_alumni=pending_alumni, 
+                           pending_sessions = pending_sessions,
+                            search_query=search_query)
 
 @views_bp.route('/admin/<int:id>')
 @login_required
@@ -52,6 +71,42 @@ def approve_alumni(id):
     db.session.commit()
     flash('Approved!', 'success')
     return redirect(url_for('views.admin_dash'))
+
+@views_bp.route('/toggle_blacklist/<int:user_id>')
+@login_required
+def toggle_blacklist(user_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('views.dashboard'))
+    user = User.query.get_or_404(user_id)
+    if user.role == 'admin':
+        flash("Admin cannot be blacklisted")
+        return redirect(url_for('views.admin_dash'))
+    
+    user.is_blacklisted = not user.is_blacklisted
+    db.session.commit()
+
+    if user.is_blacklisted:
+        status = "blacklisted"
+    else:
+        "restored"
+    flash(f"User {user} is {status}", 'success')
+    return redirect(url_for('views.admin_dash'))
+
+
+@views_bp.route('/approve_session/<int:session_id>')
+@login_required
+def approve_session(session_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('views.dashboard'))
+    
+    sess = Session.query.get_or_404(session_id)
+    sess.is_approved = True
+    db.session.commit()
+
+    flash("The session has been approved", 'success')
+    return redirect(url_for('views.admin_dash'))
+
+
 
 #Alumni
 
@@ -66,7 +121,8 @@ def alumni_dash():
         description = request.form.get('description')
         mentor_id = current_user.id 
         new_session = Session(title = title, description = description, mentor_id = mentor_id)
-        new_session.is_approved = True #by default sessions will be approved
+        #new_session.is_approved = True #by default sessions will be approved
+
 
         db.session.add(new_session)
         db.session.commit()
@@ -74,7 +130,10 @@ def alumni_dash():
         return redirect(url_for('views.alumni_dash'))
     
     my_sessions = Session.query.filter_by(mentor_id = current_user.id).all()
-    return render_template('alumni_dash.html', my_sessions = my_sessions)
+    pending_sessions = [a for a in my_sessions if not a.is_approved]
+
+    return render_template('alumni_dash.html', my_sessions = my_sessions, pending_sessions = pending_sessions)
+
 
 @views_bp.route('/update_app/<int:app_id>/<string:action>')
 @login_required
@@ -103,9 +162,10 @@ def student_dash():
     if current_user.role != 'student':
         return redirect(url_for('views.dashboard'))
     
-    sessions = Session.query.all()
-    my_apps = Application.query.filter_by(student_id = current_user.id).all()
-    return render_template('student_dash.html', available_sessions= sessions, my_applications = my_apps)
+    available_sessions = Session.query.filter_by(is_approved = True).all()
+
+    my_apps = Application.query.filter_by(student_id = current_user.id).all()#student application history
+    return render_template('student_dash.html', available_sessions= available_sessions, my_applications = my_apps)
 
 @views_bp.route('/apply/<int:session_id>', methods = ['POST'])
 @login_required

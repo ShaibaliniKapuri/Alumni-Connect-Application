@@ -10,6 +10,7 @@ class User(UserMixin,db.Model):
     password = db.Column(db.String(10), nullable=False)
     role = db.Column(db.String(20), nullable=False) # 'admin', 'alumni', 'students'
     is_approved = db.Column(db.Boolean, default = False) #use for approving alumni
+    is_blacklisted = db.Column(db.Boolean, default = False)
     resume_file = db.Column(db.String(100), nullable = True) #optional
     #define relationships
     sessions = db.relationship('Session', backref = 'mentor', lazy = True)
