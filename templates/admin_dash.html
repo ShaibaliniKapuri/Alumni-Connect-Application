@@ -95,4 +95,12 @@
         </div>
     </div>
 </div>
+<script>
+    const chartData = {{ chart_data | tojson }};
+    const ctx = document.getElementById('userChart').getContext('2d');
+    new Chart(ctx, { 
+        type: 'doughnut', 
+        data: { labels: chartData.labels, datasets: [{ data: chartData.data, backgroundColor: ['#0d6efd', '#0dcaf0'] }] } 
+    });
+</script>
 {% endblock %}

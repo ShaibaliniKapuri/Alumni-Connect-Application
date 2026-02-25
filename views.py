@@ -53,11 +53,14 @@ def admin_dash():
     #sessions = Session.query.all()
     pending_sessions = Session.query.filter_by(is_approved = False).all()
 
+    chart_data = {'labels': ['Alumni', 'Students'], 'data':[len(alumni), len(students)]}
+
     return render_template('admin_dash.html', 
                            students=students, 
                            alumni=alumni, 
                            pending_alumni=pending_alumni, 
                            pending_sessions = pending_sessions,
+                           chart_data = chart_data,
                             search_query=search_query)
 
 @views_bp.route('/admin/<int:id>')
@@ -132,7 +135,12 @@ def alumni_dash():
     my_sessions = Session.query.filter_by(mentor_id = current_user.id).all()
     pending_sessions = [a for a in my_sessions if not a.is_approved]
 
-    return render_template('alumni_dash.html', my_sessions = my_sessions, pending_sessions = pending_sessions)
+    session_titles = [session.title for session in my_sessions]
+    applicant_counts = [len(session.applications) for session in my_sessions]
+
+    chart_data = {'labels' : session_titles, 'data': applicant_counts}
+
+    return render_template('alumni_dash.html', my_sessions = my_sessions, pending_sessions = pending_sessions, chart_data = chart_data)
 
 
 @views_bp.route('/update_app/<int:app_id>/<string:action>')
@@ -165,7 +173,18 @@ def student_dash():
     available_sessions = Session.query.filter_by(is_approved = True).all()
 
     my_apps = Application.query.filter_by(student_id = current_user.id).all()#student application history
-    return render_template('student_dash.html', available_sessions= available_sessions, my_applications = my_apps)
+
+    accepted = sum(1 for app in my_apps if app.status == 'Accepted')
+    rejected = sum(1 for app in my_apps if app.status == 'Rejected')
+    pending = sum(1 for app in my_apps if app.status == 'Pending')
+
+    chart_data = {
+        'labels' : ['Accepted', 'Rejected', 'Pending'],
+        'data' : [accepted, rejected, pending]
+    }
+
+
+    return render_template('student_dash.html', available_sessions= available_sessions, my_applications = my_apps, chart_data = chart_data)
 
 @views_bp.route('/apply/<int:session_id>', methods = ['POST'])
 @login_required

@@ -62,4 +62,32 @@
         </div>
     </div>
 </div>
+<div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white"><strong>Student Stats</strong></div>
+            <div class="card-body d-flex justify-content-center">
+                <canvas id="studentChart" style="max-width: 200px; max-height: 200px;"></canvas>
+            </div>
+        </div>
+    </div>
+{% if my_applications %}
+<script>
+    const sData = {{ chartData | default({})| tojson }};
+    if (sData.labels){
+        const sCtx = d0cument.getElementById('studentChart').getContext('2d');
+        new Chart(sCtx, {
+            type: 'doughnut',
+            data: {
+                labels : sData.labels,
+                datasets: [{
+                    data: sData.data,
+                    backgroundColor: ['#008450', '#B81D13', '#EFB700']
+                }]
+            }
+        });
+    }
+    
+
+</script>
+{% endif %}
 {% endblock %}
