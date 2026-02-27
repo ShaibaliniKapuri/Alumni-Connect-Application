@@ -1,0 +1,85 @@
+openapi: 3.0.0
+info:
+  title: Alumni Connect API
+  description: API for retrieving active mentorship sessions and approved mentors for the Alumni Connect platform.
+  version: 1.0.0
+servers:
+  - url: http://127.0.0.1:5000
+    description: Local Flask Development Server
+paths:
+  /api/sessions:
+    get:
+      summary: Get Approved Sessions
+      description: Retrieves a list of all mentorship sessions that have been approved by the admin and are available to students.
+      operationId: getSessions
+      responses:
+        '200':
+          description: A JSON array of approved mentorship sessions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+  /api/mentors:
+    get:
+      summary: Get Approved Mentors
+      description: Retrieves a list of all alumni mentors who have been approved by the admin to use the platform.
+      operationId: getMentors
+      responses:
+        '200':
+          description: A JSON array of approved mentors.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorResponse'
+components:
+  schemas:
+    SessionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        count:
+          type: integer
+          example: 2
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Session'
+    Session:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Intro to UI/UX
+        description:
+          type: string
+          example: Learn the basics of UI/UX design.
+        mentor_name:
+          type: string
+          example: jane_doe
+    MentorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        count:
+          type: integer
+          example: 1
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Mentor'
+    Mentor:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        username:
+          type: string
+          example: jane_doe

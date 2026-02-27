@@ -215,3 +215,42 @@ def profile():
             db.session.commit()
             flash('Resume uploaded', 'succcess')
     return render_template('profile.html')    
+
+
+
+#API Endpoints
+
+@views_bp.route('/api/sessions', methods = ['GET'])
+def api_get_sessions():
+    sessions = Session.query.filter_by(is_approved = True).all()
+
+    sessions_data = []
+    for sess in sessions:
+        sessions_data.append({
+            'id' : sess.id,
+            'title' : sess.title,
+            'description': sess.description,
+            'mentor_name' : sess.mentor.username
+        })
+    return jsonify({
+        'status' : 'success',
+        'count' : len(sessions_data),
+        'data' : sessions_data
+    })
+
+
+@views_bp.route('/api/mentors', methods = ['GET'])
+def api_get_mentors():
+    mentors = User.query.filter_by(role = 'alumni', is_approved = True).all()
+
+    mentors_data = []
+    for mentor in mentors:
+        mentors_data.append({
+            'id' : mentor.id,
+            'username' :mentor.username
+        })
+    return jsonify({
+        'status' : 'success',
+        'count' : len(mentors_data),
+        'data' : mentors_data
+    })
